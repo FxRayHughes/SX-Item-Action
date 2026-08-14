@@ -1,0 +1,7 @@
+name: SX-Item-Action
+main: top.maplex.sxitemaction.taboolib.platform.BukkitPlugin
+version: ${version}
+api-version: '1.13'
+authors: [ Maplex ]
+depend: [ SX-Item ]
+folia-supported: true
