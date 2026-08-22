@@ -27,7 +27,12 @@
 4. 首次启动会自动下载并隔离 Fluxon 运行库，请确保服务器能够访问 Maven Central 与 TabooProject 仓库。
 5. 进入服务器执行 `/sxia status`，确认 SX-Item 显示为“已启用”。
 
-当前版本已在 **Paper 1.21.11 + SX-Item 4.4.9** 环境完成真实玩家测试。其他服务端版本以 SX-Item 自身支持范围和实际测试为准。
+当前版本已在以下环境完成真实玩家测试：
+
+- **Paper 26.2 + SX-Item 4.5.10**
+- **Paper 1.21.11 + SX-Item 4.4.9**
+
+其他服务端版本以 SX-Item 自身支持范围和实际测试为准。Minecraft 26.2 用户请使用 **SX-Item-Action 1.0.1 或更高版本**，旧版内置的 TabooLib 版本映射无法识别 26.2。
 
 ## 快速开始
 
