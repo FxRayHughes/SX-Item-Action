@@ -8,7 +8,19 @@
 - 数值显示使用 SX 原生 `<s:value>`、`<s:max-value>`，日期使用 `<s:time>` 和 SX 的 `TimeFormat`。
 - Lore 支持整行引入 `<l:CustomDurability>`、`<l:TimeLimit>`，支持指定位置、重复引用及同行文字。
 - 补充配置放置、重载、获取物品、合并现有配置和脚本 `import` 的完整示例，参见仓库 `examples/README.md`。
+- 兼容旧 SX-Attribute 的 Lore 耐久监听器，避免其重复处理本插件管理的耐久物品。
+- 修复增量构建沿用旧版 `plugin.yml` 版本号的问题，以及 Kether 示例脚本的注释语法。
 
-## 发布前验证状态
+## 已验证
 
-当前为发布草稿，未附加可安装 JAR。未执行构建（用户未要求）；本次新增功能尚未在服务端实际测试。此前 1.0.x 的动作功能测试不能替代本次验证。完成构建和 `tests/lifecycle-manual.md` 中的实际验收后，应更新本段为实际结果，并附加 1.1.0 JAR 及 SHA-256。
+- Gradle 构建通过。
+- Paper 26.2-84 / Java 25 与 Paper 1.21.11-132 / Java 21。
+- 两套环境均使用 SX-Item 4.5.10、SX-Attribute 4.0.0-beta.9。
+- 实际验证 NBT 持久化、整行/重复/混排 Lore、原生变量与日期、update/reload 状态保留、管理命令、过期清理、非法状态拒绝、脚本 import 及 Kether/Fluxon 自检。
+- 真实客户端挖掘到耐久耗尽，损坏动作一次，同编号另一件不受影响；重启后耐久和原截止时间不变，离线到期物品被清除。
+
+详细范围及尚未覆盖的交互场景见仓库 `tests/server/results-1.1.0.md`。安装时替换旧版插件 JAR 并完整重启；物品及脚本引入步骤见 `examples/README.md`。
+
+## SHA-256
+
+`95ca18746497c0ad7e823e35267a47667ffb19ec4b16b3fb89e7124b5f52ba6e  SX-Item-Action-1.1.0.jar`

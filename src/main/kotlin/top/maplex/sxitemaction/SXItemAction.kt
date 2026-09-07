@@ -8,6 +8,7 @@ import taboolib.common.platform.function.warning
 import top.maplex.sxitemaction.action.ActionRepository
 import top.maplex.sxitemaction.script.FluxonRuntimeLoader
 import top.maplex.sxitemaction.sxitem.SXItemLoreVariables
+import top.maplex.sxitemaction.sxitem.SXAttributeDurabilityBridge
 
 /**
  * SX-Item 的物品动作、自定义耐久与限时附属入口。
@@ -20,6 +21,7 @@ object SXItemAction : Plugin() {
     override fun onEnable() {
         // SX 生成器先解析顶层 Lore；必须提前注册整行变量，不能等物品生成事件才提供变量名。
         SXItemLoreVariables.register()
+        SXAttributeDurabilityBridge.install()
         if (FluxonRuntimeLoader.isReady()) {
             FluxonRuntime.getInstance().primaryThreadExecutor = java.util.concurrent.Executor { task ->
                 submit { task.run() }
@@ -35,8 +37,9 @@ object SXItemAction : Plugin() {
         info("SX-Item-Action 已加载 ${ActionRepository.templateCount} 个预制脚本")
     }
 
-    /** 正常禁用时撤销全局变量，避免 SX 后续生成含内部标记的物品。 */
+    /** 正常禁用时归还旧版耐久监听器并撤销全局变量，不留下跨插件注册状态。 */
     override fun onDisable() {
+        SXAttributeDurabilityBridge.uninstall()
         SXItemLoreVariables.unregister()
     }
 }

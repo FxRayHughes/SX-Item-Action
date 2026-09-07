@@ -1,0 +1,37 @@
+# 仅供专用测试服使用；编号隔离，避免与实际物品配置冲突。
+SXIALifecycle:
+  ID: DIAMOND_SWORD
+  Name: lifecycle-test
+  Update: true
+  Lore: ['before', '<l:CustomDurability>', 'mixed <l:CustomDurability> / <l:TimeLimit>', '', 'after']
+  CustomDurability:
+    max: 100
+    current: 50
+    lore: 'D <s:value>/<s:max-value>'
+  TimeLimit:
+    duration: 1h
+    lore: 'T <s:time>'
+SXIARealPickaxe:
+  ID: DIAMOND_PICKAXE
+  Lore: ['<l:CustomDurability>']
+  CustomDurability:
+    max: 1
+  Action:
+    on-item-break:
+      script: 'tell "SXIA_REAL_BREAK"'
+SXIAEmpty:
+  ID: PAPER
+  Lore: ['before', '<l:CustomDurability>', '<l:TimeLimit>', 'after']
+SXIABadDate:
+  ID: PAPER
+  TimeLimit:
+    expires-at: '2027/02/30 12:00'
+SXIABadDuration:
+  ID: PAPER
+  TimeLimit:
+    duration: '99999999999999999999999d'
+SXIABothExpiry:
+  ID: PAPER
+  TimeLimit:
+    duration: 7d
+    expires-at: '2027/12/31 12:00'

@@ -1,0 +1,11 @@
+name: SXIA-Lifecycle-Probe
+version: '1.0'
+main: SXIALifecycleProbe
+api-version: '1.13'
+depend: [SX-Item, SX-Item-Action]
+commands:
+  sxiaprobe:
+    permission: sxia.probe
+permissions:
+  sxia.probe:
+    default: op

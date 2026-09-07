@@ -54,6 +54,8 @@ tasks.withType<JavaCompile> {
 
 tasks.processResources {
     // plugin.yml 必须写入稳定版本号，否则 Bukkit 会把字面量 ${version} 当作插件版本展示。
+    // 版本号不是资源文件内容；显式声明输入，避免增量构建复用上一版 plugin.yml。
+    inputs.property("pluginVersion", project.version.toString())
     filesMatching("plugin.yml") {
         expand("version" to project.version)
     }

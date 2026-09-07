@@ -29,12 +29,14 @@
 4. 首次启动会自动下载并隔离 Fluxon 运行库，请确保服务器能够访问 Maven Central 与 TabooProject 仓库。
 5. 进入服务器执行 `/sxia status`，确认 SX-Item 显示为“已启用”。
 
-此前发布的动作功能已在以下环境完成真实玩家测试：
+1.1.0 已在以下环境完成客户端操作、服务端状态及重启测试：
 
-- **Paper 26.2 + SX-Item 4.5.10**
-- **Paper 1.21.11 + SX-Item 4.4.9**
+- **Paper 26.2-84 + SX-Item 4.5.10 + Java 25**
+- **Paper 1.21.11-132 + SX-Item 4.5.10 + Java 21**
 
-1.1.0 新增的耐久、限时和整行 Lore 变量尚未完成构建与服务端测试，验收场景见 [测试清单](tests/lifecycle-manual.md)。上述历史测试结果不代表新增功能已经通过验证。
+两套环境均安装 SX-Attribute 4.0.0-beta.9，覆盖耐久/限时 NBT、整行 Lore、update/reload、管理命令、脚本导入、真实挖掘损坏和离线到期。详见 [1.1.0 测试结果](tests/server/results-1.1.0.md)；完整交互场景清单不等于全部已验证。
+
+与旧 SX-Attribute 同装时，本插件会让其旧 Lore 耐久监听器跳过本插件管理的耐久物品，避免重复扣减；其他物品的原有耐久处理仍保留。
 
 其他服务端版本以 SX-Item 自身支持范围和实际测试为准。Minecraft 26.2 用户请使用 **SX-Item-Action 1.0.1 或更高版本**，旧版内置的 TabooLib 版本映射无法识别 26.2。
 
