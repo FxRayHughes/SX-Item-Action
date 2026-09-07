@@ -1,0 +1,22 @@
+# 可选的独立脚本导入示例。
+# 1. 此文件复制到 plugins/SX-Item/Item/import-items.yml。
+# 2. scripts/kether/lifecycle-break.ks 复制到
+#    plugins/SX-Item-Action/scripts/kether/lifecycle-break.ks。
+# 3. 执行 /sxia reload、/sxia validate、/si reload。
+# 4. 执行 /si give ImportedBreakSword，手持使用至损坏后观察消息。
+# 引用的 import 是脚本名，不能拿来加载物品 YAML 文件。
+ImportedBreakSword:
+  ID: IRON_SWORD
+  Name: '&6脚本导入测试剑'
+  Lore:
+    - '<l:CustomDurability>'
+  CustomDurability:
+    max: 2
+    current: 2
+    lore: '&7耐久度: <s:value>/<s:max-value>'
+  Action:
+    on-item-break:
+      engine: kether
+      import: lifecycle-break
+      variables:
+        message: '&c你的装备耐久耗尽，已损坏！'

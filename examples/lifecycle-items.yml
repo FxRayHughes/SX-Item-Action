@@ -1,0 +1,107 @@
+# 完整接入步骤、已有物品合并方法、变量和脚本 import 说明见同目录 README.md。
+#
+# 引入步骤：
+# 1. 安装 SX-Item 4.x 与包含耐久/限时功能的 SX-Item-Action，完整启动服务器。
+# 2. 此文件复制到 plugins/SX-Item/Item/lifecycle-items.yml（不是 SX-Item-Action 目录）。
+# 3. 用 OP 玩家执行 /si reload，然后 /si give TrialSword。
+#    控制台发放：si give TrialSword 玩家名 1（需在线玩家）。
+# 4. 修改配置后执行 /si reload 并重新生成物品；/sxia reload 仅重载独立脚本。
+#
+# 也可仅复制某个物品内的 CustomDurability、TimeLimit 到已有物品节点，与 Action 同级。
+# 仅需耐久时删除 TimeLimit 及其 Lore 引用；仅需限时时删除 CustomDurability 及其引用。
+# CustomDurability / TimeLimit 为插件自动注册的整行变量名，不要在 Random 中定义同名变量。
+# 没写整行变量的旧配置仍会在 Lore 末尾追加显示行；写了变量后不会重复追加。
+# 物品编号（最左侧节点）不能与其他文件重复，修改编号后领取命令也要使用新编号。
+#
+# 实际耐久和截止时间自动保存到 NBT 的 SX-Attribute 节点，不需要手写 NBT。
+# update、重载或重新登录不重置已有物品的状态；以下配置只提供初始值。
+
+# 示例一：七天有效期的耐久武器。获取：/si give TrialSword
+TrialSword:
+  ID: DIAMOND_SWORD
+  Name: '&b试用长剑'
+  Lore:
+    - '&7有效期内可使用的自定义耐久武器'
+    - ''
+    # 整行变量展开对应模块的 lore 模板，位置由这里决定，无需自行注册 Random。
+    - '<l:CustomDurability>'
+    - '<l:TimeLimit>'
+    - ''
+    - '&8使用后耐久会减少'
+  CustomDurability:
+    # 最大耐久必须解析为 1～2147483647 的整数，材质必须具有原版耐久。
+    max: 10000
+    # 初始剩余耐久，0～max；省略时默认为满耐久。
+    current: 10000
+    # 通过 SX 原生解析器显示已保存的 NBT 数值，不需要在 Random 中定义这两个变量。
+    lore: '&7耐久度: <s:value>/<s:max-value>'
+  TimeLimit:
+    # 从生成时计时，离线仍计时；支持 600（秒）、7d、1d2h30m、30s。
+    # 与 expires-at 必须二选一。快速测试可改成 30s，然后领取一件新物品。
+    duration: 7d
+    # time 是已保存的截止时间，使用 SX 的 TimeFormat 格式化。
+    lore: '&7到期时间: <s:time>'
+  Action:
+    # 耐久耗尽时执行；限时到期清理不会触发这个动作。
+    # 这是内联脚本，无需复制独立脚本文件。import 用法见 import-items.yml。
+    on-item-break:
+      script: 'tell color "&c你的试用长剑已损坏"'
+
+# 示例二：SX 本地 Random 和嵌套计算。获取：/si give RandomDurabilitySword
+# max 只在初始化时取值，之后的使用/update 不重新随机。
+RandomDurabilitySword:
+  ID: IRON_SWORD
+  Name: '&e随机耐久长剑'
+  Lore:
+    - '<l:CustomDurability>'
+  Random:
+    initialDurability:
+      - '1000'
+      - '2000'
+  CustomDurability:
+    max: '<s:initialDurability>'
+    # max 先解析，再作为 max-value 提供给 current；c:int 使用 SX 的整数计算结果。
+    current: '<c:int <s:max-value> / 2>'
+    lore: '&7耐久度: <s:value>/<s:max-value>'
+
+# 示例三：用 SX 原生时间表达式生成截止日期。获取：/si give SXDateToken
+SXDateToken:
+  ID: PAPER
+  Name: '&b七天凭证'
+  Lore:
+    - '<l:TimeLimit>'
+  TimeLimit:
+    # t:7d 只在首次初始化时计算；不能同时填写 duration。
+    # 日期文本精度跟随 SX TimeFormat，默认不含秒。精确秒数测试优先用 duration: 30s。
+    expires-at: '<t:7d>'
+    # 展示保存值用 s:time，不要用 t:7d 反复计算“从现在开始七天后”的文本。
+    lore: '&7到期时间: <s:time>'
+
+# 示例四：固定日期到期。获取：/si give FestivalToken
+# 使用前请改成未来日期；日期已过期的物品会立即被清理。
+FestivalToken:
+  ID: PAPER
+  Name: '&6活动凭证'
+  Lore:
+    - '&7活动期间有效'
+    - '<l:TimeLimit>'
+  TimeLimit:
+    # 格式跟随 plugins/SX-Item/Config.yml 的 TimeFormat，此例使用默认 yyyy/MM/dd HH:mm。
+    # 如果 TimeFormat 改为 yyyy/MM/dd HH:mm:ss，此处也须补上秒，再执行 /si reload。
+    expires-at: '2026/12/31 23:59'
+
+# 示例五：旧格式 Lore 的首次导入。获取：/si give LegacySword
+# 日期也须遵循 SX TimeFormat，并在测试前改成未来日期。
+LegacySword:
+  ID: IRON_SWORD
+  Name: '&e旧格式长剑'
+  # 兼容格式仅用于首次初始化；后续修改 Lore 不覆盖 NBT 中的状态。
+  Lore:
+    - '&7Durability: 5000/10000'
+    - '&7到期时间：2026/12/31 23:59'
+
+# 主手物品管理命令（要求 sxitemaction.admin，OP 可用于测试）：
+# /sxia durability 2  - 将当前主手物品设为 2/2，方便测试损坏动作。
+# /sxia repair        - 补满当前主手物品耐久，不改变到期时间。
+# /sxia timelimit 30s - 从现在起重新设置当前主手物品有效期为 30 秒。
+# /si nbt            - 查看 SX-Attribute 中实际保存的耐久和到期毫秒值。

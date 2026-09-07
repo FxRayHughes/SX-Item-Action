@@ -1,6 +1,7 @@
 package top.maplex.sxitemaction.command
 
 import org.bukkit.Bukkit
+import org.bukkit.entity.Player
 import org.bukkit.event.Cancellable
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
@@ -19,8 +20,10 @@ import top.maplex.sxitemaction.action.ActionStatistics
 import top.maplex.sxitemaction.action.ActionTrigger
 import top.maplex.sxitemaction.action.ScriptEngine
 import top.maplex.sxitemaction.script.ScriptExecutor
+import top.maplex.sxitemaction.lifecycle.ItemLifecycle
+import top.maplex.sxitemaction.sxitem.SXItemGateway
 
-/** 提供脚本重载、运行状态与静态校验命令，便于无客户端的服务器控制台验收。 */
+/** 提供脚本管理和手持物品生命周期管理；物品修改仅作用于当前玩家主手的 SX-Item。 */
 @CommandHeader(name = "sxitemaction", aliases = ["sxia"], permission = "sxitemaction.admin")
 object ActionCommand {
 
@@ -32,7 +35,58 @@ object ActionCommand {
             sender.sendMessage("§e/sxia status §7- 查看依赖与运行统计")
             sender.sendMessage("§e/sxia validate §7- 查看脚本仓库诊断")
             sender.sendMessage("§e/sxia selftest §7- 以当前玩家执行两套脚本与事件取消自检")
+            sender.sendMessage("§e/sxia durability <最大耐久> §7- 设置主手物品耐久并补满")
+            sender.sendMessage("§e/sxia repair §7- 修复主手物品自定义耐久")
+            sender.sendMessage("§e/sxia timelimit <秒数或1d2h30m> §7- 从现在起设置主手物品有效期")
         }
+    }
+
+    /** 最大值只改当前物品，避免管理测试意外改变整个 SX-Item 物品模板。 */
+    @CommandBody
+    val durability = subCommand {
+        dynamic("maximum") {
+            execute<ProxyPlayer> { sender, context, _ ->
+                editHeldItem(sender) { item, player ->
+                    val maximum = requireNotNull(context["maximum"].toIntOrNull()) { "最大耐久必须是正整数" }
+                    ItemLifecycle.setDurability(item, maximum, player)
+                }
+            }
+        }
+    }
+
+    /** 仅补回已消耗的自定义耐久；修复不延长限时物品的到期时间。 */
+    @CommandBody
+    val repair = subCommand {
+        execute<ProxyPlayer> { sender, _, _ ->
+            editHeldItem(sender) { item, player ->
+                val state = requireNotNull(ItemLifecycle.inspect(item, player)) { "未识别到 SX-Item" }
+                require(!state.invalid && state.maximum != null) { "物品没有有效的自定义耐久" }
+                require(!state.expired()) { "物品已过期，修复不会续期" }
+                ItemLifecycle.setDurability(item, state.maximum, player)
+            }
+        }
+    }
+
+    /** 明确设置新期限，不把重复执行误解为叠加时长；接受纯秒数或 d/h/m/s 组合。 */
+    @CommandBody
+    val timelimit = subCommand {
+        dynamic("duration") {
+            execute<ProxyPlayer> { sender, context, _ ->
+                editHeldItem(sender) { item, player -> ItemLifecycle.setTimeLimit(item, context["duration"], player) }
+            }
+        }
+    }
+
+    private fun editHeldItem(sender: ProxyPlayer, operation: (ItemStack, Player) -> Unit) {
+        val player = Bukkit.getPlayerExact(sender.name) ?: return
+        // 在副本上验证并提交，参数或配置错误不会把主手物品留在半修改状态。
+        val item = player.inventory.itemInMainHand.clone()
+        runCatching {
+            require(SXItemGateway.identify(item) != null) { "请在主手持有 SX-Item 生成的物品" }
+            operation(item, player)
+            player.inventory.setItemInMainHand(item)
+        }.onSuccess { sender.sendMessage("§a已更新主手物品") }
+            .onFailure { sender.sendMessage("§c${it.cause?.message ?: it.message}") }
     }
 
     @CommandBody

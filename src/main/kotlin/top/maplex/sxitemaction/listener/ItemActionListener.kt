@@ -100,6 +100,9 @@ object ItemActionListener {
     @Schedule(period = 20)
     fun onTimer() {
         Bukkit.getOnlinePlayers().forEach { player ->
+            // 先逐槽清理到期物品，再对剩余物品按编号去重，防止同编号的另一件逃过有效期检查。
+            ItemLifecycleListener.scanPlayer(player)
+            ItemLifecycleListener.scanInventory(player.openInventory.topInventory, player)
             val visited = hashSetOf<String>()
             player.inventory.contents.filterNotNull().forEach { item ->
                 val itemId = SXItemGateway.identify(item) ?: return@forEach
@@ -111,6 +114,8 @@ object ItemActionListener {
     }
 
     private fun dispatch(player: Player, item: ItemStack?, event: Event, trigger: ActionTrigger) {
+        // 生命周期限制先于脚本生效；损坏回调允许读取零耐久快照，其他入口不可使用零耐久物品。
+        if (!ItemLifecycleListener.allow(player, item, event, broken = trigger == ActionTrigger.ITEM_BREAK)) return
         val itemId = SXItemGateway.identify(item) ?: return
         val actualItem = item ?: return
         val config = SXItemGateway.itemConfig(actualItem) ?: return
@@ -125,8 +130,13 @@ object ItemActionListener {
         // 首动作必须在原始事件回调内启动，脚本才能在首次挂起前动态取消事件。
         definitions.drop(1).fold(ScriptExecutor.execute(first, context)) { chain, definition ->
             chain.thenComposeAsync({
-                sharedVariables.putAll(definition.variables)
-                ScriptExecutor.execute(definition, context)
+                // 前一脚本可能等待到有效期之后，每次继续动作链都重新检查。
+                if (ItemLifecycleListener.allow(player, actualItem, broken = trigger == ActionTrigger.ITEM_BREAK)) {
+                    sharedVariables.putAll(definition.variables)
+                    ScriptExecutor.execute(definition, context)
+                } else {
+                    java.util.concurrent.CompletableFuture.completedFuture<Any?>(null)
+                }
             }, mainThreadExecutor)
         }
     }
