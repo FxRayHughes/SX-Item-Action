@@ -1,6 +1,7 @@
 package top.maplex.sxitemaction.listener
 
 import org.bukkit.Bukkit
+import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
@@ -12,6 +13,7 @@ import org.bukkit.event.entity.EntityPickupItemEvent
 import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerInteractEntityEvent
 import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.event.player.PlayerAnimationEvent
 import org.bukkit.event.player.PlayerItemBreakEvent
 import org.bukkit.event.player.PlayerItemConsumeEvent
 import org.bukkit.event.player.PlayerSwapHandItemsEvent
@@ -53,6 +55,18 @@ object ItemActionListener {
     fun onInteractEntity(event: PlayerInteractEntityEvent) {
         if (event.hand != EquipmentSlot.HAND) return
         dispatch(event.player, event.player.inventory.itemInMainHand, event, ActionTrigger.RIGHT_CLICK_ENTITY)
+    }
+
+    /**
+     * Bukkit 不会为左键实体产生 PlayerInteractEvent；客户端只发送挥手动作，且攻击事件还可能因
+     * 无伤害、无敌帧或其他插件拦截而缺失。因此从挥手位置沿视线做短距离采样，命中实体时补发
+     * LEFT_CLICK。采样只负责识别实体，实际攻击仍由 EntityDamageByEntityEvent 触发 ATTACK，避免重复。
+     */
+    @SubscribeEvent
+    fun onAnimation(event: PlayerAnimationEvent) {
+        val player = event.player
+        if (findSwingTarget(player) == null) return
+        dispatch(player, player.inventory.itemInMainHand, event, ActionTrigger.LEFT_CLICK)
     }
 
     @SubscribeEvent
@@ -140,6 +154,32 @@ object ItemActionListener {
             }, mainThreadExecutor)
         }
     }
+
+    /**
+     * 以实体眼睛为起点进行有限距离射线采样。Bukkit 1.12 没有统一的实体射线 API，
+     * 使用小半径邻域既兼容旧 API，也能覆盖玩家准星落在实体边缘的情况。
+     */
+    private fun findSwingTarget(player: Player): Entity? {
+        val origin = player.eyeLocation
+        val direction = origin.direction.normalize()
+        val world = player.world
+        var distance = 0.0
+        while (distance <= SWING_TARGET_DISTANCE) {
+            val point = origin.clone().add(direction.clone().multiply(distance))
+            val target = world.getNearbyEntities(point, SWING_SAMPLE_RADIUS, SWING_SAMPLE_RADIUS, SWING_SAMPLE_RADIUS)
+                .asSequence()
+                .filter { it != player && !it.isDead }
+                .filter { entity -> entity !is Player || player.hasLineOfSight(entity) }
+                .minByOrNull { it.location.distanceSquared(point) }
+            if (target != null) return target
+            distance += SWING_SAMPLE_STEP
+        }
+        return null
+    }
+
+    private const val SWING_TARGET_DISTANCE = 4.5
+    private const val SWING_SAMPLE_RADIUS = 0.55
+    private const val SWING_SAMPLE_STEP = 0.15
 
     /** 定时入口没有原生 Bukkit 事件，使用稳定单例作为脚本中的 `event` 值。 */
     private object TimerEvent : Event() {
