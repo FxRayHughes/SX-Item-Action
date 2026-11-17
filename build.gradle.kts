@@ -16,8 +16,8 @@ taboolib {
         enableLegacyDependencyResolver = true
     }
     version {
-        // TabooLib 会在启动期校验服务端版本；该发布物首次覆盖 26.2，旧快照会跳过依赖版本映射的功能。
-        taboolib = "6.3.0-e78afcf"
+        // TabooLib 会在启动期校验服务端版本；该发布物覆盖 26.3，旧快照会跳过依赖版本映射的功能。
+        taboolib = "6.3.0-8f586e4"
         coroutines = "1.8.1"
     }
     // 编译产物中的 Fluxon 类型引用必须与运行时下载重定向目标完全一致，避免污染或复用其他插件的运行时。

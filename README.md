@@ -38,7 +38,7 @@
 
 与旧 SX-Attribute 同装时，本插件会让其旧 Lore 耐久监听器跳过本插件管理的耐久物品，避免重复扣减；其他物品的原有耐久处理仍保留。
 
-其他服务端版本以 SX-Item 自身支持范围和实际测试为准。Minecraft 26.2 用户请使用 **SX-Item-Action 1.0.1 或更高版本**，旧版内置的 TabooLib 版本映射无法识别 26.2。
+其他服务端版本以 SX-Item 自身支持范围和实际测试为准。Minecraft 26.2 用户请使用 **SX-Item-Action 1.0.1 或更高版本**；Minecraft 26.3 用户请使用 **SX-Item-Action 1.1.2 或更高版本**（需搭配 SX-Item 4.5.12+），旧版内置的 TabooLib 版本映射无法识别新版本。
 
 ## 快速开始
 
